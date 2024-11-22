@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/card_homePage.dart';
 import 'add_fine_screen.dart';
+import 'fine_list.dart';
+import 'map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -83,15 +85,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Color(0xff6b4b3f),
                     title: 'Consultar Multas',
                     onTap: () {
-                      // Acción para la segunda pantalla
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const FineList()),
+                      );
                     },
                   ),
                   CardWidget(
-                    icon: Icons.search_outlined,
+                    icon: Icons.map_outlined,
                     color: Color(0xff6b4b3f),
-                    title: 'Otroooooo',
+                    title: 'Mapa',
                     onTap: () {
-                      // Acción para la segunda pantalla
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MapScreen()),
+                      );
                     },
                   ),
                 ],
