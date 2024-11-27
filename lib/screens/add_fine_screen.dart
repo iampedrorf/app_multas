@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-import '../models/fine.dart';
+import '../main.dart';
 
 class AddFine extends StatefulWidget {
   const AddFine({super.key});
@@ -18,30 +20,85 @@ class _AddFineState extends State<AddFine> {
   final _limitController = TextEditingController();
   final _latController = TextEditingController();
   final _lngController = TextEditingController();
+  final _emailController = TextEditingController();
 
-  bool _isEmailSent = false;
-
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final fine = FineModel(
-        plate: _plateController.text,
-        city: _cityController.text,
-        state: _stateController.text,
-        speed: double.tryParse(_speedController.text) ?? 0.0,
-        limit: double.tryParse(_limitController.text) ?? 0.0,
-        lat: double.tryParse(_latController.text) ?? 0.0,
-        lng: double.tryParse(_lngController.text) ?? 0.0,
-        isEmailSent: _isEmailSent,
-        creationDate: DateTime.now(),
-      );
+      final fineData = {
+        "plate": _plateController.text,
+        "city": _cityController.text,
+        "state": _stateController.text,
+        "speed": double.tryParse(_speedController.text) ?? 0.0,
+        "limit": double.tryParse(_limitController.text) ?? 0.0,
+        "lat": double.tryParse(_latController.text) ?? 0.0,
+        "lng": double.tryParse(_lngController.text) ?? 0.0,
+        "email": _emailController.text.toLowerCase(),
+      };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Multa registrada: ${fine.plate}'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      var url = Uri.parse("$api/api/fines");
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(fineData),
+        );
+
+        // Verificamos el código de estado HTTP
+        if (response.statusCode == 200) {
+          // Multa registrada exitosamente
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.green,
+              content: Text(
+                "¡Multa Registrada Exitosamente!\nCódigo de estado: 201",
+                style: TextStyle(color: Colors.white),
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        } else {
+          // Si el código de estado no es 200, manejamos el error
+          String errorMessage = 'Error desconocido';
+          try {
+            var responseData = jsonDecode(response.body);
+            errorMessage =
+                responseData['message'] ?? 'Error al registrar la multa';
+          } catch (e) {
+            // Si no se puede parsear el JSON, mostramos el código de estado
+            errorMessage =
+                'Error al registrar la multa: ${response.statusCode}';
+            print("Error al parsear respuesta del servidor: $e");
+          }
+
+          // Mostrar el error con código de estado
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.red,
+              content: Text(
+                '$errorMessage\nCódigo de estado: ${response.statusCode}',
+                style: TextStyle(color: Colors.white),
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (e) {
+        // En caso de error de conexión
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.red,
+            content: Text(
+              'Error de conexión\nDetalles: $e',
+              style: TextStyle(color: Colors.white),
+            ),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        print('Error al enviar los datos: $e');
+      }
     }
   }
 
@@ -49,13 +106,14 @@ class _AddFineState extends State<AddFine> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff6b4b3f),
+        backgroundColor: const Color(0xff6b4b3f),
         title: const Text(
           'Registrar Multa',
           style: TextStyle(
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
         ),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -92,18 +150,10 @@ class _AddFineState extends State<AddFine> {
                   TextInputType.numberWithOptions(decimal: true),
                   isNumeric: true,
                 ),
-                Row(
-                  children: [
-                    const Text('¿Enviar correo?'),
-                    Checkbox(
-                      value: _isEmailSent,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          _isEmailSent = value ?? false;
-                        });
-                      },
-                    ),
-                  ],
+                _buildTextField(
+                  _emailController,
+                  'Correo Electrónico',
+                  TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -111,7 +161,7 @@ class _AddFineState extends State<AddFine> {
                   child: ElevatedButton(
                     onPressed: _submitForm,
                     style: ElevatedButton.styleFrom(
-                      primary: Color(0xff6b4b3f),
+                      primary: const Color(0xff6b4b3f),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(fontSize: 18),
                     ),
@@ -144,11 +194,11 @@ class _AddFineState extends State<AddFine> {
           labelStyle: const TextStyle(color: Color(0xff6b4b3f)),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(0xff6b4b3f), width: 2),
+            borderSide: const BorderSide(color: Color(0xff6b4b3f), width: 2),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(0xff6b4b3f), width: 2),
+            borderSide: const BorderSide(color: Color(0xff6b4b3f), width: 2),
           ),
           filled: true,
           fillColor: Colors.white,
