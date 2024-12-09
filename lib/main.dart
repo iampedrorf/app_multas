@@ -2,7 +2,7 @@ import 'package:app_proyecto_multas/models/fine.dart';
 import 'package:app_proyecto_multas/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
-var api = "http://172.20.2.196:3000";
+var api = "http://172.20.6.199:3000";
 final List<FineModel> finesList = [];
 
 void main() {

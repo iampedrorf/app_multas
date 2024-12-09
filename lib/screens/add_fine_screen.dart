@@ -161,7 +161,7 @@ class _AddFineState extends State<AddFine> {
                   child: ElevatedButton(
                     onPressed: _submitForm,
                     style: ElevatedButton.styleFrom(
-                      primary: const Color(0xff6b4b3f),
+                      backgroundColor: const Color(0xff6b4b3f),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(fontSize: 18),
                     ),
