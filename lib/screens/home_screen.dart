@@ -22,9 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        elevation: 0,
       ),
       body: Container(
-        color: const Color(0xfff5f5f5),
+        color: Colors.white,
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -32,18 +33,24 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
               decoration: BoxDecoration(
-                color: Color(0xffe0e0e0),
+                color: Color(0xff6b4b3f), // Color de fondo del container
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
-                children: const [
-                  Icon(Icons.info_outline, color: Color(0xff6b4b3f)),
+                children: [
+                  Icon(Icons.info_outline, color: Colors.white),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '¡Recuerda revisar las multas pendientes para evitar cargos adicionales!',
-                      style: TextStyle(fontSize: 14, color: Colors.black),
+                      style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
+                  ),
+                  // Imagen en el lado derecho
+                  Image.asset(
+                    'assets/multaimage.png', // Ruta de tu imagen
+                    width: 90, // Ajusta el tamaño según lo necesites
+                    height: 90,
                   ),
                 ],
               ),
@@ -55,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(
                 'Selecciona una opción para continuar',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.w600,
                   color: Color(0xff6b4b3f),
                 ),

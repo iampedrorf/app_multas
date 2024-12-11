@@ -201,7 +201,7 @@ class _FineListState extends State<FineList> {
                           background: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              color: Colors.blue,
+                              color: Color(0xffA9C9A1),
                               alignment: Alignment.centerLeft,
                               padding: const EdgeInsets.only(left: 16.0),
                               child:
@@ -211,7 +211,7 @@ class _FineListState extends State<FineList> {
                           secondaryBackground: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              color: Colors.red,
+                              color: Color(0xffB24C47),
                               alignment: Alignment.centerRight,
                               padding: const EdgeInsets.only(right: 16.0),
                               child:

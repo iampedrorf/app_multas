@@ -117,6 +117,7 @@ class _AddFineState extends State<AddFine> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xff6b4b3f),
         iconTheme: IconThemeData(color: Colors.white),
