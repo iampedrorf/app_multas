@@ -43,7 +43,9 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   internet_connection_checker: ^1.0.0+1
   flutter_cache_manager: ^3.3.1
-
+  google_maps_flutter: ^2.10.0
+  permission_handler: ^11.3.1
+  geolocator: ^9.0.1
 
 
   # The "flutter_lints" package below contains a set of recommended lints to

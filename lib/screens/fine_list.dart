@@ -1,6 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:http/http.dart' as http;
+
+import '../main.dart';
+import '../models/fine.dart';
+import 'add_fine_screen.dart';
 
 class FineList extends StatefulWidget {
   const FineList({super.key});
@@ -11,17 +15,15 @@ class FineList extends StatefulWidget {
 
 class _FineListState extends State<FineList> {
   final TextEditingController _plateController = TextEditingController();
-  late List<Map<String, dynamic>> fines;
-  late List<Map<String, dynamic>> filteredFines;
-
-  final String apiUrl = 'http://localhost:3000/api/fines';
+  late List<FineModel> fines;
+  late List<FineModel> filteredFines;
 
   @override
   void initState() {
     super.initState();
     fines = [];
     filteredFines = [];
-    _fetchFines();
+    _fetchFines(); // Cargar multas cuando se inicie la pantalla
     _plateController.addListener(_filterFines);
   }
 
@@ -32,41 +34,24 @@ class _FineListState extends State<FineList> {
   }
 
   Future<void> _fetchFines() async {
-    final url = Uri.parse("http://localhost:3000/api/fines");
-
     try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-
-        setState(() {
-          fines = data
-              .map((fine) => {
-                    "id": fine["_id"],
-                    "plate": fine["plate"],
-                    "city": fine["city"],
-                    "state": fine["state"],
-                    "speed": fine["speed"],
-                    "limit": fine["limit"],
-                  })
-              .toList();
-          filteredFines =
-              List.from(fines); // Inicialmente igual al listado completo
-        });
-      } else {
-        throw Exception('Error al obtener las multas: ${response.statusCode}');
-      }
+      List<FineModel> fetchedFines =
+          await getFines(context); // Traer las multas actualizadas
+      setState(() {
+        fines = fetchedFines;
+        filteredFines = List.from(fines); // Filtrar las multas
+      });
     } catch (e) {
-      print('Error al obtener las multas: $e');
+      print("Error al obtener multas: $e");
     }
   }
 
   void _filterFines() {
     String query = _plateController.text.trim().toUpperCase();
     setState(() {
-      filteredFines =
-          fines.where((fine) => fine["plate"]!.contains(query)).toList();
+      filteredFines = fines
+          .where((fine) => fine.plate.toUpperCase().contains(query))
+          .toList();
     });
   }
 
@@ -75,37 +60,83 @@ class _FineListState extends State<FineList> {
   }
 
   void _editFine(int index) async {
-    
+    final fineToEdit = fines[index];
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddFine(existingFine: fineToEdit),
+      ),
+    );
+
+    if (result == true) {
+      _fetchFines(); // Recargar la lista después de actualizar
+    }
   }
 
-  Future<void> _deleteFine(String id) async {
-    final url = Uri.parse("http://localhost:3000/api/fines/$id");
+  Future<void> deleteFine(
+      BuildContext context, String fineId, int index) async {
+    var url = Uri.parse("$api/api/fines/$fineId");
 
-    try {
-      final response = await http.delete(url);
+    if (await InternetConnectionChecker().hasConnection) {
+      try {
+        var response = await http.delete(url).timeout(
+          Duration(seconds: 60),
+          onTimeout: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: Color(0xfffd687b),
+                content: Text("Red inestable. Por favor, intente más tarde"),
+                behavior: SnackBarBehavior.floating,
+                duration: Duration(seconds: 1, milliseconds: 500),
+              ),
+            );
+            return http.Response('{}', 408);
+          },
+        );
 
-      if (response.statusCode == 200) {
+        print('Respuesta de delete: ${response.body}');
+        if (response.statusCode == 200) {
+          // El recurso fue eliminado con éxito
+          print('Multa eliminada correctamente');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.green,
+              content: Text("Multa eliminada con éxito."),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          // Aquí se elimina la multa de la lista
+          setState(() {
+            fines.removeAt(index); // Elimina de la lista original
+            filteredFines.removeAt(index); // Elimina de la lista filtrada
+          });
+        } else {
+          // Manejo de otros códigos de error (401, 404, 500, etc.)
+          // ...
+        }
+      } catch (e) {
+        print('Error al eliminar multa: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: Colors.green,
-            content: Text(
-              '¡Multa eliminada exitosamente!',
-              style: TextStyle(color: Colors.white),
-            ),
+            backgroundColor: Color(0xfffd687b),
+            content: Text("Error al intentar eliminar la multa."),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
           ),
         );
-        await _fetchFines();
-      } else {
-        throw Exception('Error al eliminar la multa: ${response.statusCode}');
       }
-    } catch (e) {
+    } else {
+      // Si no hay conexión a internet
+      print('Sin conexión a internet');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: Colors.red,
-          content: Text(
-            'Error al eliminar la multa: $e',
-            style: TextStyle(color: Colors.white),
-          ),
+          backgroundColor: Color(0xfffd687b),
+          content: Text("Sin conexión a internet. Intente nuevamente."),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
         ),
       );
     }
@@ -155,10 +186,9 @@ class _FineListState extends State<FineList> {
                       child: Text(
                         "No se encontraron multas.",
                         style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w500,
-                        ),
+                            fontSize: 16,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500),
                         textAlign: TextAlign.center,
                       ),
                     )
@@ -167,7 +197,7 @@ class _FineListState extends State<FineList> {
                       itemBuilder: (context, index) {
                         final fine = filteredFines[index];
                         return Dismissible(
-                          key: Key(fine["plate"]),
+                          key: Key(fine.plate),
                           background: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
@@ -189,14 +219,12 @@ class _FineListState extends State<FineList> {
                             ),
                           ),
                           confirmDismiss: (direction) async {
-                            final String fineId = fines[index]["id"];
-
                             if (direction == DismissDirection.startToEnd) {
-                              _editFine;
+                              _editFine(index);
                               return false;
                             } else if (direction ==
                                 DismissDirection.endToStart) {
-                              _deleteFine(fineId);
+                              deleteFine(context, fine.id, index);
                               return false;
                             }
                             return null;
@@ -218,12 +246,11 @@ class _FineListState extends State<FineList> {
                                           color: Colors.blue),
                                       const SizedBox(width: 8),
                                       Text(
-                                        "Placa: ${fine["plate"]}",
+                                        "Placa: ${fine.plate}",
                                         style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                          color: Colors.black87,
-                                        ),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            color: Colors.black87),
                                       ),
                                     ],
                                   ),
@@ -238,7 +265,7 @@ class _FineListState extends State<FineList> {
                                               color: Colors.orange),
                                           const SizedBox(width: 4),
                                           Text(
-                                            "${fine["city"]}, ${fine["state"]}",
+                                            "${fine.city}, ${fine.state}",
                                             style: const TextStyle(
                                                 fontSize: 14,
                                                 color: Colors.black54),
@@ -258,7 +285,7 @@ class _FineListState extends State<FineList> {
                                               color: Colors.red),
                                           const SizedBox(width: 4),
                                           Text(
-                                            "Velocidad: ${fine["speed"]} km/h",
+                                            "Velocidad: ${fine.speed} km/h",
                                             style: const TextStyle(
                                                 fontSize: 14,
                                                 color: Colors.black54),
@@ -271,7 +298,7 @@ class _FineListState extends State<FineList> {
                                               color: Colors.green),
                                           const SizedBox(width: 4),
                                           Text(
-                                            "Límite: ${fine["limit"]} km/h",
+                                            "Límite: ${fine.limit} km/h",
                                             style: const TextStyle(
                                                 fontSize: 14,
                                                 color: Colors.black54),

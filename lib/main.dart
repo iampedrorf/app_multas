@@ -1,9 +1,11 @@
 import 'package:app_proyecto_multas/models/fine.dart';
+import 'package:app_proyecto_multas/repository/permisos.dart';
 import 'package:app_proyecto_multas/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
-var api = "http://172.20.6.199:3000";
+var api = "http://multa-infra.ddns.net";
 final List<FineModel> finesList = [];
+Permisos _permisos = Permisos();
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _fetchFinesAndNavigate();
+    _permisos.permisoUbicacionYGuardar();
   }
 
   Future<void> _fetchFinesAndNavigate() async {

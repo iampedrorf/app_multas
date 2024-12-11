@@ -7,6 +7,7 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 import '../main.dart';
 
 class FineModel {
+  String id;
   String plate;
   String city;
   String state;
@@ -14,10 +15,12 @@ class FineModel {
   double limit;
   double lat;
   double lng;
+  String email;
   bool isEmailSent;
   DateTime creationDate;
 
   FineModel({
+    required this.id,
     required this.plate,
     required this.city,
     required this.state,
@@ -25,12 +28,14 @@ class FineModel {
     required this.limit,
     required this.lat,
     required this.lng,
+    required this.email,
     this.isEmailSent = false,
     required this.creationDate,
   });
 
   Map<String, dynamic> mapForInsert() {
     return {
+      'id': id,
       'plate': plate,
       'city': city,
       'state': state,
@@ -38,6 +43,7 @@ class FineModel {
       'limit': limit,
       'lat': lat,
       'lng': lng,
+      'email': email,
       'isEmailSent': isEmailSent,
       'creationDate': creationDate.toIso8601String(),
     };
@@ -46,6 +52,7 @@ class FineModel {
   factory FineModel.fromJson(Map<String, dynamic> json) {
     print('JSON recibido: $json');
     return FineModel(
+      id: json['_id'],
       plate: json['plate'],
       city: json['city'],
       state: json['state'],
@@ -53,6 +60,7 @@ class FineModel {
       limit: (json['limit'] as num).toDouble(),
       lat: (json['lat'] as num).toDouble(),
       lng: (json['lng'] as num).toDouble(),
+      email: json['email'],
       isEmailSent: json['isEmailSent'] ?? false,
       creationDate: DateTime.parse(json['creationDate']),
     );
