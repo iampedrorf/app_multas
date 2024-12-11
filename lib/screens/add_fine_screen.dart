@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:app_proyecto_multas/screens/setLocation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -149,6 +150,7 @@ class _AddFineState extends State<AddFine> {
                   Icons.warning,
                   isNumeric: true,
                 ),
+                _buildLocationSelector(),
                 _buildTextField(
                   _latController,
                   'Latitud',
@@ -238,6 +240,37 @@ class _AddFineState extends State<AddFine> {
           }
           return null;
         },
+      ),
+    );
+  }
+
+  _buildLocationSelector() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 0.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text(
+            'Seleccionar ubicación en el mapa',
+            style: TextStyle(fontSize: 16),
+          ),
+          IconButton(
+            icon: Icon(Icons.map, color: Color(0xff6b4b3f)),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SelectLocationScreen(
+                    onLocationSelected: (lat, lng) {
+                      _latController.text = lat.toString();
+                      _lngController.text = lng.toString();
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
